@@ -9,30 +9,29 @@ int A[m][n] = {
 	{1,1,0,1,0,1,0,1,0,0}
 	
 };
+
 int main() {
-	int i,j,t, n0, n1, ntemp=n;
+	int i, j, t, n0, n1, ntemp=n;
 	int B[n], res[m];
 
-	for (i=0; i<m; i++)
+	for (i = 0; i < m; i++)
 		res[i]=-1;
 
-	for (i=0; i<n; i++)
+	for (i = 0; i < n; i++)
 		B[i]=i;
 
-	for (i=(m-1); i>=0; i--)
-	{
+	for (i = (m-1); i >= 0; i--) {
 		n0 = n1 = 0;
-		for (j=0; j<ntemp; j++)
-		{
+		for (j = 0; j < ntemp; j++) {
 			if (A[i][B[j]] == 0)
 				n0++;
 			else
 				n1++;
 		}
 
-		if (n0 - n1 == 2 || n0 - n1 == 1) 
+		if ((n0 - n1 == 2) || (n0 - n1 == 1)) 
 			res[i] = 1;
-		else if (n0 - n1 == 0 || n0 - n1 == -1) 
+		else if ((n0 - n1 == 0) || (n0 - n1 == -1)) 
 			res[i] = 0;
 		else
 			std::cout<<"Warning"<<std::endl;
@@ -52,7 +51,7 @@ int main() {
 			ntemp = floor(ntemp/2.0);
 	}
 
-	for (i=0; i<m; i++)
+	for (i = 0; i < m; i++)
 		std::cout << res[i];
 	std::cout<<std::endl;
 		
