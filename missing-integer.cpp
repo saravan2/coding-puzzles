@@ -1,7 +1,13 @@
+/* Header files */
 #include<iostream>
 #include<math.h>
-const int n=10;
-const int m= floor(log2(n))+1;
+
+/* Globals */
+const int n = 10;
+const int m = floor(log2(n))+1;
+
+/* Integer sequence is stored in binary form with access to every bit
+   taking const time */
 int A[m][n] = {
 	{0,0,1,0,0,0,0,1,1,0},
 	{0,0,0,1,1,1,0,0,0,0},
@@ -10,18 +16,21 @@ int A[m][n] = {
 	
 };
 
+/* O(n) algorithm to find the missing integer in this sequence */ 
 int main() {
-	int i, j, t, n0, n1, ntemp=n;
+	int i, j, t, n0, n1, ntemp = n;
 	int B[n], res[m];
 
+	/*  Initializing res, B arrays */
 	for (i = 0; i < m; i++)
-		res[i]=-1;
+		res[i] = -1;
 
 	for (i = 0; i < n; i++)
 		B[i]=i;
 
 	for (i = (m-1); i >= 0; i--) {
 		n0 = n1 = 0;
+
 		for (j = 0; j < ntemp; j++) {
 			if (A[i][B[j]] == 0)
 				n0++;
