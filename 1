@@ -1,0 +1,20 @@
+#include<iostream>
+#include<string>
+using namespace std;
+
+void inOrderListing(string n) {
+	generateInOrderListing(n, "");
+}
+
+void generateInOrderListing(string n, string prefix) {
+	cout << prefix + "(" + n + ")" << endl;
+	for (int i = 1; i < n.length(); i++) {
+		String newPrefix = prefix + "(" + n.substr(0,i) + ")";
+		generateInOrderListing(n.substr(i), newPrefix);
+	}
+}
+
+int main() {
+	inOrderListing("1234");
+	return 0;
+}
