@@ -1,0 +1,65 @@
+Two sum puzzle
+----------------
+Brute force O(n^2)
+Two for loops to check every combination.
+Work done (n-1, n-2 .. 2) = 0(n^2)
+
+Efficient solution O(n) - With just a single pass.
+Two Sum = element 1 + element 2
+* Attempt to search for an array element in a separate map.
+* If the element does not exists on the map, store the result of sum - element 1. Note if two sum actually exists, the value of sum - element 1 would be element 2.
+* If the element about to be inserted actually exists on our map, it implies that the two sum solution actually exists (i.e. we are trying to insert element 2)
+
+Slightly less efficient solution O(nlogn) : nlogn + n
+* Sort the array
+* Assign two pointers, one(start) points to the start of array, second(end) points to the end of array. 
+if (A[start]+A[end] == target) return start,end
+if(sum > target) end--
+if(sum < target)start++ 
+To find all pairs:
+For each element in the sorted array, check if there exists (target – element) by doing binary search
+
+Three sum puzzle
+----------------
+Brute force O(n^3)
+Three for loops to check every combination of 3 elements in the array.
+
+Efficient solution O(n^2)
+* Sort the array
+* 3 sum = a + b + c
+* Choose a to be all elements at index i from 0 - (n-3)
+* Choose b and c from the remaining i+1 to n, moving indexes for b and c based on a + b + c values as follows :
+ sort(S);
+ for i=0 to n-3 do
+    a = S[i];
+    start = i+1;
+    end = n-1;
+    while (start < end) do
+       b = S[start]
+       c = S[end];
+       if (a+b+c == 3sum) then
+          output a, b, c;
+          // Continue search for all triplet combinations summing to 3sum.
+           end = end - 1
+       else if (a+b+c > 0) then
+          end = end - 1;
+       else
+          start = start + 1;
+       end
+    end
+ end 
+
+Another O(n^2) approach that does not involve sorting is to have all elements of the array in a hash table and finding for each index i and j in the array, we can check whether the hash table contains (3sum - array[i] - array[j]) 
+Work done to fill the hash table is O(n), two for loops for choosing every possible i and j in the unsorted array, work done would be O(n^2)(Would be true even if the array is sorted). 
+
+Four sum puzzle
+----------------
+Brute force O(n^4)
+Four for loops to check every combination of 4 elements in the array.
+
+Efficent Approach O(n^3)
+* Sort the array
+* Note 4sum = a + b + c + d 
+* Traverse the array choosing a along the way and solve the problem using 3sum for (4sum -a)
+
+Note using this approach of sorting and reducing the problem to k-1Sum, we can reduce any kSum problem to a time complexity of O(n^(k-1)) 
