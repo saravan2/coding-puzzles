@@ -27,8 +27,9 @@ Three for loops to check every combination of 3 elements in the array.
 Efficient solution O(n^2)
 * Sort the array
 * 3 sum = a + b + c
-* Choose a to be all elements at index i from 0 - (n-3)
-* Choose b and c from the remaining i+1 to n, moving indexes for b and c based on a + b + c values as follows :
+* Choose a to be all elements at index i from 0 to (n-3)
+* Choose b and c from the remaining i+1 to n-1 
+* Moving indexes for b and c based on a + b + c values as follows :
  sort(S);
  for i=0 to n-3 do
     a = S[i];
@@ -63,3 +64,22 @@ Efficent Approach O(n^3)
 * Traverse the array choosing a along the way and solve the problem using 3sum for (4sum -a)
 
 Note using this approach of sorting and reducing the problem to k-1Sum, we can reduce any kSum problem to a time complexity of O(n^(k-1)) 
+
+Powerset
+---------
+Powerset is exhaustive, it has no linear time complexity. It has inherent exponential time complexity.
+
+Recursive method (Not scalable)
+Complexity O(2^N)
+Each and every element in the set is either part of the powerset solution or not.
+Scan the input string or set and at every element, recursively call the function by branching into the following two paths :
+i. Including the current element in the solution
+ii. The current element is not part of the solution
+When we have no more element to scan in our recursive function, print the subset solution built so far.
+
+Iterative method (Scalable only upto the largest datatype)
+Complexity O(N*2^N) worse than recursive method.
+Notice that binary represenation of numbers 0 to the cardinality of the powerset (2^N) has bits set in positions that could generate the subsets.
+Iterate through index 0 to 2^(Set size)
+Check the bit pattern in index and correspondingly choose the element from set to build a subset.
+Notice the N in O(N*2^N) comes from this algorithm checking the bit pattern which should match the set size. So choose your datatype to iterate through 0 to 2^N carefully. 
