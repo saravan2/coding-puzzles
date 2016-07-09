@@ -12,6 +12,9 @@ c
 s
 
 To view STL containers, include the custom ./gdbinit file present in the working directory
+Download init file at : https://sourceware.org/gdb/wiki/STLSupport
+
+Place the contents in a .gdbinit file on the present working directory.
 
 gdb -iex "set auto-load safe-path /<pwd>/" ./powerset.exe
 

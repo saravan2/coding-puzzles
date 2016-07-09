@@ -10,22 +10,23 @@ public:
             return false;
         }
         
-        int len=1;
-        for (len=1; (x/len) >= 10; len*=10 );
+        int powersOfTen=1;
+        for (powersOfTen=1; (x/powersOfTen) >= 10; powersOfTen*=10 );
         
         while (x != 0 ) {
-            int left = x / len;
+            int left = x / powersOfTen;
             int right = x % 10;
             
             if(left!=right){
                 return false;
             }
            
-            // x % len gives all digits minus most significant
+            // x % powersOfTen gives all digits minus most significant
             // x / 10 takes away the least significant.
             // Cheeky way of doing it.
-            x = (x%len) / 10;
-            len /= 100;
+            x = (x%powersOfTen) / 10;
+	    // As the number got trimmed down	
+            powersOfTen /= 100;
         }
         return true;
     }
