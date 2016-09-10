@@ -71,7 +71,7 @@ Powerset is exhaustive, it has no linear time complexity. It has inherent expone
 
 Recursive method (Not scalable)
 Complexity O(2^N)
-Each and every element in the set is either part of the powerset solution or not.
+Invariant : Each and every element in the set is either part of the powerset solution or not.
 Scan the input string or set and at every element, recursively call the function by branching into the following two paths :
 i. Including the current element in the solution
 ii. The current element is not part of the solution
@@ -83,3 +83,25 @@ Notice that binary represenation of numbers 0 to the cardinality of the powerset
 Iterate through index 0 to 2^(Set size)
 Check the bit pattern in index and correspondingly choose the element from set to build a subset.
 Notice the N in O(N*2^N) comes from this algorithm checking the bit pattern which should match the set size. So choose your datatype to iterate through 0 to 2^N carefully. 
+
+All Possible Balanced Parentheses
+------------------------------------
+The # of all possible balanced paranthesis follows the catalan number sequence
+Formula (2n)!/((n+1)!n!) for n>=0
+
+Recursive method (Not scalable) 
+Have not deduced the complexity.
+
+Invariant : The invariant for balanced parentheses is that at any point in our construction the # left parantheses should be greater or equal than the # right parentheses; so that we may avoid constructing ()) or )()
+
+We are going to build our solution recursively by decrementing left and right parentheses that are allowed to be used.
+
+If # left and # right parentheses is 0, we print the solution constructed so far and exit
+When # left parentheses is greater than 0, keep on adding "(" to solution and decrement left before recursive call .
+When # right parentheses is greater than 0 and # right parentheses is less than left, add ")" to solution and decrement right before recursive call.
+
+
+Iterative method Unknown :(
+
+Non Overlapping Parentheses
+----------------------------
