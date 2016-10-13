@@ -65,6 +65,49 @@ Efficent Approach O(n^3)
 
 Note using this approach of sorting and reducing the problem to k-1Sum, we can reduce any kSum problem to a time complexity of O(n^(k-1)) 
 
+isPalindrome
+--------------
+Complexity O(N)
+Negative numbers are not considered to be palindromes.
+Two methods
+1. Reverse the number and compare
+Warning : Has potential underflow and overflow cases.
+Pseudo code
+if x != reverse(x)
+	return false
+else
+	return true
+
+reverse(x)
+y=0
+while x != 0
+	n=x%10
+// if ((y > (INT_MAX-n)/10) || ((INT_MIN - y) + n > 0)) return -1 
+	y=y*10+n
+	x/=10
+done
+return y
+
+2. Compare the front and last two digits and move inwards
+Pseudocode
+isPalindrome(x)
+powersOfTen=1
+for (powersOfTen=1; (x/powersOfTen) >= 10; powersOfTen*=10)
+
+while x != 0
+	front = x / powersOfTen
+	last = x % 10
+
+	if (front != last)
+		return false
+	// x % powersOfTen gives all digits minus most significant
+	// x / 10 takes away the least significant.
+	x = (x % powersOfTen) / 10
+	// As the number got trimmed down
+	powersOfTen /= 100;
+done
+return true
+	
 Powerset
 ---------
 Powerset is exhaustive, it has no linear time complexity. It has inherent exponential time complexity.
@@ -105,3 +148,36 @@ Iterative method Unknown :(
 
 Non Overlapping Parentheses
 ----------------------------
+Given a set of digits, generate all possible non overlapping parantheses amongst the digits in the set.
+
+Recursive method (Not scalable)
+Output is divided into prefix and postfix strings. The prefix strings passed as arguments are perfectly constructed. The recursive module works on building prefix and generating postfix strings.
+Complexity O(2^(n-1))
+Invariant : Postfix string should have atleast 1 digit.
+Print prefix with postfix digits enclosed within parantheses. Append digits (in postfix string) enclosed within parantheses to prefix string till there exists just a single digit on the postfix. Call recursive module for every prefix and postfix generation.
+
+Count and Say Sequence
+-----------------------
+This sequence blows up very quickly, do not use any native datatype for solving this puzzle. As we just require the previous value to generate the next value, using strings is ideal to solve this puzzle.
+
+There exists two variations for this problem : 
+1. Generate the sequence upto n terms 
+2. Given  a starting value, generate the nth term value.
+
+Recursive method (Not scalable)
+
+Iterative method (Scalable until program's VM limitations)
+Complexity(pn, where p is the pth term of the sequence at which the program stops and n is the maximum length of the string generated)
+Datatypes : string and vector to parrse the previous string.
+Parse the previous string and store the digits on the vector.
+If vector is not empty.
+	Initialize variables val to be the value of first digit in vector and count variable to be 1
+	Iterate i from 0 through size of the vector
+		If value at vector[i] equals val
+			Increment count
+		else
+			Add count to next string
+			Add val to next string
+			val = vector[i]
+			count=1
+Edge cases for seed value being null, vector being null, generating n term sequence or the nth term are very trivial.

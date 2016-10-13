@@ -80,10 +80,31 @@ void countAndSay(int n) {
 	cout << seq << endl;
 }
 
+void countAndSayValueAt(int n, string start) {
+	if (n <= 0) {
+		cout << start << endl;
+		return;
+	}	
+
+	string prev = start;
+	string next = "";
+	for (int i = 0; i < n; i++) {
+		next = getNext(prev);
+		prev = next;	
+	}
+
+	cout << next << endl;
+}	
+
 int main(int argc, char *argv[]) {
 	int n = 0;
-	if (argc > 1)
+	if (argc == 2) {
 		n = atoi(argv[1]);
-	countAndSay(n);	
+		countAndSay(n);	
+	} else if (argc == 3) {
+		n = atoi(argv[1]);
+		string start(argv[2]);
+		countAndSayValueAt(n, start);
+	}
 	return 0;
 }
