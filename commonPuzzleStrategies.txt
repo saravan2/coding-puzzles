@@ -181,3 +181,15 @@ If vector is not empty.
 			val = vector[i]
 			count=1
 Edge cases for seed value being null, vector being null, generating n term sequence or the nth term are very trivial.
+
+Reversing bits in a bitmap 
+-----------------------------
+i. Simple Method to reverse all bits in a bitmap
+Time Complexity - O(logN)
+Space Complexity - O(1)
+Remember (num & (1 << i)) where i ranges from 0th to last bit will reveal whether a bit is set on a value stored inside a native datatype.
+If a bit is set in the ith position in the input then set the bit on the output at (# of bits - 1) - i
+ii. Reversing every # bits in a bitmap
+Time Complexity - O(2*logN) which is O(logN)
+Space Complexity - O(1)
+Create a helper function which can reverse every # bits stored in an integer datatype variable. Have a main for loop which iterates from 0th to last bit; fill up a temp variable that contains the relevant bitmap pertaining to # bits. When we fill up the relevant bitmap, update the output with the reverse of it. Watchout for corner case where, the last segment # bits might not have been updated on the output. Initialize your index variables and populate the output containing the last segment.
