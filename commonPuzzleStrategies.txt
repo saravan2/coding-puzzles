@@ -42,7 +42,7 @@ Efficient solution O(n^2)
           output a, b, c;
           // Continue search for all triplet combinations summing to 3sum.
            end = end - 1
-       else if (a+b+c > 0) then
+       else if (a+b+c > 3sum) then
           end = end - 1;
        else
           start = start + 1;
@@ -184,6 +184,8 @@ Edge cases for seed value being null, vector being null, generating n term seque
 
 Reversing bits in a bitmap 
 -----------------------------
+The following methods assume that the bitmaps belong to integer datatype.
+We can make life easier by storing the bitmap on a vector, which increases space complexity.
 i. Simple Method to reverse all bits in a bitmap
 Time Complexity - O(logN)
 Space Complexity - O(1)
@@ -193,3 +195,9 @@ ii. Reversing every # bits in a bitmap
 Time Complexity - O(2*logN) which is O(logN)
 Space Complexity - O(1)
 Create a helper function which can reverse every # bits stored in an integer datatype variable. Have a main for loop which iterates from 0th to last bit; fill up a temp variable that contains the relevant bitmap pertaining to # bits. When we fill up the relevant bitmap, update the output with the reverse of it. Watchout for corner case where, the last segment # bits might not have been updated on the output. Initialize your index variables and populate the output containing the last segment.
+
+All possible paranthesis to evaluate expression
+------------------------------------------------
+This is eerily similar to Catalan number sequence problems like parantheses, Dyck's words, etc.
+Complexity : Brute force O(n * (C(2n,n) - C(2n, n+1)))
+DP solution exists. Complexity could be n!
