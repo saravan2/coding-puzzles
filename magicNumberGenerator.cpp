@@ -174,8 +174,9 @@ void generateMagicSquare(int n) {
 		return;
 	}
 	vector < vector <int> > sol(n, vector<int>(n));
-	bool used[(n*n) + 1] = {false};
+	bool* used = new bool[(n*n) + 1];
 	generateMagicSquareUtilFaster(sol, 0, n, used);
+	delete[] used;
 }
 
 void generateMagicSquares(int n) {
@@ -184,9 +185,10 @@ void generateMagicSquares(int n) {
 		return;
 	}
 	vector < vector <int> > sol(n, vector<int>(n));
-	bool used[(n*n) + 1] = {false};
+	bool* used = new bool[(n*n) + 1];
 //	generateMagicSquaresUtil(sol, 0, n, used);
 	generateMagicSquaresUtilFaster(sol, 0, n, used);
+	delete[] used;
 	
 }
  
