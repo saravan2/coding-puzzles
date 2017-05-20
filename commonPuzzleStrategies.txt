@@ -201,3 +201,11 @@ All possible paranthesis to evaluate expression
 This is eerily similar to Catalan number sequence problems like parantheses, Dyck's words, etc.
 Complexity : Brute force O(n * (C(2n,n) - C(2n, n+1)))
 DP solution exists. Complexity could be n!
+
+Least Recently Used Cache
+---------------------------
+We need to define a class for LRU with capacity, list of key/value stores and a hashmap with key and iterator to the key/value store. Get operation involves hashmap lookup, if successful it is followed by moving of the key/value store to the front of the list. Set operation involves checking whether key already exists to replace the old value with new value, moving the new key/value store to the front of the list and checking whether capacity of the LRU cache has been reached; if so, we erase the last key/value store in the list and its corresponding entry in hashmap. The latter operation of deleting entry in hashmap necessiates the need to store key/value store in the list instead of just values.
+Lookups/Get O(1)
+Insertion/Set O(1)
+Space O(N)
+This solution is very much scalable.
