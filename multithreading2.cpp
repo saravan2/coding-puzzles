@@ -1,3 +1,4 @@
+//g++ -std=c++11 -pthread -g -o multithreads2 semaphore.cpp multithreading2.cpp
 #include"semaphore.h"
 #include<iostream>
 #include<thread>
