@@ -209,3 +209,12 @@ Lookups/Get O(1)
 Insertion/Set O(1)
 Space O(N)
 This solution is very much scalable.
+
+Permutation Generator
+-----------------------
+The maximum number of permutations that can be generated for a string of size n is n! We attempt to generate next permutation in lexicograhic order, using the previous result. The algorithm moves from right to left. To be consistent and terminate properly, we should construct the first output/generation to be in ascending order. For the subsequent generations, the procedure is as follows :
+1.  Moving from right to left, find the position where the first decrement happens ie (*pos < *(pos+1)); 
+1.1 If pos is at the start of the string. No more permutation is possible. Return null result.
+2. Moving from right to left, find the next biggest element.
+3. Swap pos and next biggest element.
+4. Reverse the rest of the suffix from pos+1
