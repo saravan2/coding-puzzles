@@ -1,8 +1,19 @@
-//Credits : Jackson Gabbard www.jg.gg
+//Credits : Jackson Gabbard www.jg.gg, Geek for Geeks.
 //g++ -g -std=c++11 -o pg permutationGenerator.cpp
+// For string with no duplicates, the complexity is O(n*n!), as we can
+// afford to reverse the suffix blindly.
+// For string with duplicates, the complexity to generate all distinct 
+// permutations is O(nlogn*n!). Note that we have to sort the suffix 
+// containing duplicates after swap, to produce all distinct permutations. 
+// Both approaches require base string to be sorted to produce lexicographically
+// ordered generations.
+// Brute force backtracking recursive method exists whose complexity is O(n*n!)
+// which is not scalable and requires addtional set datastructure to filter
+// duplicate permutations when the string is known to contain duplicates.
 #include<iostream>
 #include<vector>
 #include <sstream>
+#include<algorithm>
 
 using namespace std;
 class permutationGen {
@@ -22,22 +33,38 @@ class permutationGen {
 		maxPermutations = maxNumberOfPermutations();	
 	}
 	vector<int> operator() (){
-		if (completed == maxPermutations)
-			return vector<int>{};
+//		if (completed == maxPermutations)
+//			return vector<int>{};
 
 		if (!base.size()) {
 			for (int i=0; i<size; i++) {
+#if 0
+				// Code to add duplicates.
+				if (i < 2)
+					base.push_back(1);
+				else if (i >= size-3)
+					base.push_back(size-1);
+				else
+					base.push_back(i+1);
+#endif
 				base.push_back(i+1);
 			}
+			sort(base.begin(), base.end());
 			completed++;
 			return base;
 		}
 
 		// Finding the first decrement
 		vector<int>::iterator decr = (base.end()-2);
-		while ((decr >= base.begin()) && (*decr > *(decr+1))) {
+		while (decr >= base.begin()) {
+			if (*decr < *(decr+1)) {
+				break;
+			}
 
 			// Reduntant as completed == maxPermutations would screen this case
+			// However as we do not accurately calculate maxPermutations
+			// in strings with duplicates, we eventually hit this
+			// conditional check.
 
 			// No further permutation is possible
 			// Valuable lesson learnt, decr could get below begin()
@@ -47,27 +74,37 @@ class permutationGen {
 			decr--;
 		}
 
-		// Finding the next biggest element
-		vector<int>::iterator nextBig = (base.end()-1);
-		while ((nextBig >= base.begin()) && (*decr > *nextBig))
-			nextBig--;
+		// Finding the closest big element in the suffix
+		vector<int>::iterator suffix = (decr+1);
+		vector<int>::iterator nextBig = suffix;
+		while (suffix <= base.end()) {
+			if ((*suffix > *decr) && (*suffix < *nextBig))
+				nextBig = suffix;
+			suffix++;
+		}
 		
 		// Swapping decr and next biggest element
 		swap(decr, nextBig);
 
-		// Reversing the rest of the suffix from decr+1
+		// *If the input contains duplicates, we have to sort
+		// the suffix to produce distinct permutations !*
 		vector<int>::iterator left = decr+1;
+/*
+		// Reversing the rest of the suffix from decr+1
+		// This strategy works iff there are no duplicates.
 		vector<int>::iterator right = (base.end()-1);
 		while (left < right) {
 			swap(left, right);
 			left++;
 			right--;
 		}
-
+*/
+		sort(left, base.end());
 		completed++;	
 
 		return base;
 	}
+	/* Fails miserably when string has duplicates */
 	unsigned int maxNumberOfPermutations() {
 		unsigned int result = 0;
 		if (size) {
@@ -111,7 +148,7 @@ int main(int argc, char* argv[]) {
 		}
 	} 
 
-	cout << "Max # of permuations is " << p.maxNumberOfPermutations() << ". Number of permutations left is " << p.numberOfPermutationsLeft() << endl;
+//	cout << "Max # of permuations is " << p.maxNumberOfPermutations() << ". Number of permutations left is " << p.numberOfPermutationsLeft() << endl;
 
 	vector<int> result;
 	while (true) {
