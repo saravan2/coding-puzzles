@@ -10,11 +10,19 @@ using namespace std;
 
 // Assumes that newTerm is >=7, odd and is not a multiple of 3 or 5
 bool isPrimeOptimized(unsigned long long newTerm) {
-	for (unsigned long long i = 7ULL; (i*i) <= newTerm; i=i+2) {
+	unsigned long long divby3Tracker = 2;
+	unsigned long long divby5Tracker = 1;
+	for (unsigned long long i = 7ULL; (i*i) <= newTerm; i=i+2, divby3Tracker++, divby5Tracker++) {
 		// Save CPU cycles avoiding mod operations on newTerm
 		// (can be very large unsigned long long number)
 		// which are destined to fail   
-		if (((i % 3ULL) == 0) || ((i % 5ULL) == 0)) {
+		if ((divby3Tracker == 3) || (divby5Tracker == 5)) {
+			if (divby3Tracker ==3) {
+				divby3Tracker = 0;
+			}
+			if (divby5Tracker == 5) {
+				divby5Tracker = 0;
+			}
 			continue;
 		}
                 if((newTerm % i) == 0) {
