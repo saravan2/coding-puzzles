@@ -10,8 +10,8 @@ using namespace std;
 
 // Assumes that newTerm is >=7, odd and is not a multiple of 3 or 5
 bool isPrimeOptimized(unsigned long long newTerm) {
-	unsigned long long divby3Tracker = 2;
-	unsigned long long divby5Tracker = 1;
+	unsigned int divby3Tracker = 2;
+	unsigned int divby5Tracker = 1;
 	for (unsigned long long i = 7ULL; (i*i) <= newTerm; i=i+2, divby3Tracker++, divby5Tracker++) {
 		// Save CPU cycles avoiding mod operations on newTerm
 		// (can be very large unsigned long long number)
@@ -115,3 +115,19 @@ int main(int argc, char* argv[]) {
 	unsigned long long N = stoull(args[1]);
 	return generateSequence(N);
 }
+
+/*
+Runtime :
+saravanand@SJCLSARAVANA01 ~/coding-puzzles
+$ g++ -O3 -o fizz fizzbuzz.cpp
+
+saravanand@SJCLSARAVANA01 ~/coding-puzzles
+$ time ./fizz.exe 100
+0 1 1 BuzzFizz BuzzFizz BuzzFizz 8 BuzzFizz Buzz 34 Fizz BuzzFizz Buzz BuzzFizz 377 Fizz Buzz BuzzFizz 2584 4181 FizzBUzz 10946 17711 BuzzFizz Buzz Fizz 121393 196418 Buzz BuzzFizz Fizz 1346269 Buzz 3524578 5702887 Fizz Buzz 24157817 39088169 63245986 FizzBUzz 165580141 267914296 BuzzFizz Buzz Fizz 1836311903 BuzzFizz Buzz 7778742049 Fizz 20365011074 Buzz 53316291173 86267571272 Fizz Buzz 365435296162 591286729879 956722026041 FizzBUzz 2504730781961 4052739537881 6557470319842 Buzz Fizz 27777890035288 44945570212853 Buzz 117669030460994 Fizz 308061521170129 Buzz 806515533049393 1304969544928657 Fizz Buzz 5527939700884757 8944394323791464 14472334024676221 FizzBUzz 37889062373143906 61305790721611591 BuzzFizz Buzz Fizz 420196140727489673 679891637638612258 Buzz 1779979416004714189 Fizz 4660046610375530309 Buzz 12200160415121876738
+Unsigned long long datatype overflowed, unable to continue ... Aborting
+
+real    0m1.047s
+user    0m1.014s
+sys     0m0.015s
+
+ */
