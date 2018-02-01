@@ -39,7 +39,7 @@ int dpEditDistance(string str1, string str2) {
                 s[i][j] = j;
             } else if (j == 0) {
                 s[i][j] = i;
-            } else if (str1[i] == str2[j]) {
+            } else if (str1[i-1] == str2[j-1]) {
                 s[i][j] = s[i-1][j-1];
             } else {
                 s[i][j] = 1 + min(  s[i-1][j],
