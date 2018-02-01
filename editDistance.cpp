@@ -49,7 +49,16 @@ int dpEditDistance(string str1, string str2) {
             }
         }
     }
-    return s[m][n];
+    
+    int editDist = s[m][n];
+    
+    for (int i = 0; i < (m+1); i++) {
+        delete[] s[i];
+    }
+    
+    delete[] s;
+    
+    return editDist;
 }
 
 bool isSingleEdit(string str1, string str2) {
