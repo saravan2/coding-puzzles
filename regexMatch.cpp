@@ -6,45 +6,57 @@
 // Credits : Careercup
 #include<iostream>
 using namespace std;
-bool _isMatch(string::iterator ss, string::iterator sn, string::iterator rs, string::iterator rn) {
-	if (ss == sn && rs == rn) 
+bool _isMatch(string  &ss, unsigned int spos, string &rs, unsigned int rpos) {
+	if (spos == ss.length() && rpos == rs.length()) 
 		return true;
 
-	if (ss == sn) {
-		if (*rs == '+' || *rs == '*') {
-			_isMatch(ss, sn, ++rs, rn);
+	if (spos == ss.length() && rpos != rs.length()) {
+		if (rs[rpos] == '+' || rs[rpos] == '*') {
+			return _isMatch(ss, spos, rs, ++rpos);
 		} else {
 			return false;
 		}
 	}
 
-	if (*rs == '+') {
-		_isMatch(++ss, sn, rs++, rn);
+	if (spos != ss.length() && rpos == rs.length()) {
+		return false;
 	}
 
-	if (*rs == '*') {
-		rs++;
+	if (rs[rpos] == '+') {
+		return _isMatch(ss, ++spos, rs, ++rpos);
+	}
+
+	if (rs[rpos] == '*') {
+		rpos++;
 		bool result = false;
-		while (ss != sn) {
-			result |= _isMatch(++ss, sn, rs, rn);
+		while (spos!= ss.length()) {
+			result |= _isMatch(ss, ++spos, rs, rpos);
+			if (result) {
+				break;
+			}	
 		}
 		return result;
 	}
 
-	if (*ss == *rs) {
-		return _isMatch(++ss, sn, ++rs, rn);
+	if (ss[spos] == rs[rpos]) {
+		return _isMatch(ss, ++spos, rs, ++rpos);
 	} else {
 
 		return false;
 	}
 }
 bool isMatch(string str, string regex) {
-	return _isMatch(str.begin(), str.end(), regex.begin(), regex.end());
+	unsigned int spos = 0;
+	unsigned int rpos = 0;
+	if (!str.length() && !regex.length()) {
+		return true;
+	} else {
+		return _isMatch(str, spos, regex, rpos);
+	}
 }
 
 int main(int argc, char* argv[]) {
 	cout <<"aaabbbc " << string(isMatch("aaabbbc","a*")? "matches ":"does not match ") << "regex a*\n";
 	cout <<"baaabab " << string(isMatch("baaabab","ba*a++")? "matches ":"does not match ") << "regex ba*a++\n";
-//	isMatch("aaabbbc","a*")?cout<<"aaabbbc matches regex a*\n":cout<<"aaabbbc does not match regex a*\n";
 	return 1;
 }
