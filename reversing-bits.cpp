@@ -45,8 +45,27 @@ int main() {
 	for (unsigned int i = 1 << 31; i > 0; i = i / 2)
         	(x & i)? cout <<"1": cout <<"0";
 	cout<<endl;
+	cout<<"Attempting to reverse even and odd bits in this bitmap : "<<endl;
+	unsigned int reverse = 0;
+	unsigned int sofar[2];
+	for (unsigned int i = 1 << 31, j = 0, k = 31; i > 0; i = i / 2) {
+		if (x & i) {
+			sofar[j] = 1;
+		} else {
+			sofar[j] = 0;
+		}
+		if (j == 1) {
+			reverse = reverse | (sofar[j] << k);
+			reverse = reverse | (sofar[j-1] << (k-1));
+			j = 0;
+			k -= 2;
+		} else {
+			j++;
+		}
+	}
+	cout << "Reversed bitmap : " << bitset<32>(reverse) << endl;
 	string str;
-	cout<<"Attempting to reverse 2 bits in this bitmap : "<<endl;
+	cout<<"Attempting to reverse every 2 bits in this bitmap : "<<endl;
 	for (unsigned int i = 1 << 31; i > 0; i = i / 2) {
 		str = ((x & i)?"1":"0") + str;
 		if (str.size()==2) {
@@ -59,5 +78,6 @@ int main() {
 	unsigned int reverseX = reverseBitsEvery(x, 2);
 	for (unsigned int i = 1 << 31; i > 0; i = i / 2)
         	(reverseX & i)? cout <<"1": cout <<"0";
-	return 1;
+	cout<<endl;
+	return 0;
 }
