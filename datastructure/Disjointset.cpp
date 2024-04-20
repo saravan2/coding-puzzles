@@ -39,6 +39,11 @@ public:
             rank[v]++;
         }
     }
+
+    ~DisjointSet() {
+        delete[] parent;
+        delete[] rank;
+    }
 };
 
 int main(int argc, char const *argv[]) {
