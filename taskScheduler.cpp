@@ -5,13 +5,10 @@ extern int current_time_us();
 
 class Task {
 public:
-    void (*callback)();
+    std::function<void()> callback;
     int execute_at;
     
-    Task(void (*callback)(), int execute_at) {
-        this->callback = callback;
-        this->execute_at = execute_at;
-    }
+    Task(std::function<void()> callback, int execute_at) : callback(callback), execute_at(execute_at) {}
 };
 
 class Compare {
@@ -22,10 +19,10 @@ public:
 };
 
 // STL uses max heap by default, so we need to define a min heap by using > in the comparison.
-std::priority_queue<Task, std::vector<Task>, Compare>> TaskQueue;
+std::priority_queue<Task, std::vector<Task>, Compare> TaskQueue;
 
 void schedule(void (*callback)(), int delay_us) {
-    Task new_task = new Task(callback, delay_us + current_time_us());
+    Task new_task(callback, delay_us + current_time_us());
     TaskQueue.push(new_task);
     set_next_timer();
 }
@@ -44,5 +41,5 @@ void hw_timer_handler() {
         TaskQueue.pop();
         task.callback();
     }
-    set_hw_timer();
+    set_next_timer();
 }
