@@ -1,3 +1,4 @@
+#include <functional>
 #include<prioirity_queue>
 // Version 2 : Using priority queue in C++ STL.
 extern void set_hw_timer(int relative_time_us);
