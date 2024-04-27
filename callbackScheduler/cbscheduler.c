@@ -1,11 +1,10 @@
-#include "cbscheduler.h"
-#include <sys/time.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <timer.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
+#include <timer.h>
+#include "cbscheduler.h"
 
 // Structs
 typedef struct {
@@ -24,17 +23,32 @@ typedef struct {
     unsigned long long tq_mutex_tail;
 } TaskPQ;
 
-// Global
+// Globals
 TaskPQ tq* = NULL;
 volatile unsigned int tq_shutdown = 1;
 
-uint64_t get_current_time_in_us() {
+// Declarations
+static uint64_t get_current_time_in_us();
+static void tq_fair_mutex_lock();
+static void tq_fair_mutex_unlock();
+static void tq_fair_mutex_unlock();
+static void tq_set_timer();
+static void tq_resize();
+static void tq_bubble_up();
+static void tq_bubble_down();
+static void tq_push(Task T);
+static Task tq_pop();
+static Task tq_front();
+static void timer_thread(void * arg);
+
+
+static uint64_t get_current_time_in_us() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec*(uint64_t)1000000 + tv.tv_usec;
 }
 
-void tq_fair_mutex_lock() {
+static void tq_fair_mutex_lock() {
     if (tq) {
         pthread_mutex_lock(&tq->tq_mutex);
         unsigned long long turn = tq->tq_mutex_tail++;
@@ -44,7 +58,7 @@ void tq_fair_mutex_lock() {
     }
 }
 
-void tq_fair_mutex_unlock() {
+static void tq_fair_mutex_unlock() {
     if (tq) {
         tq->tq_mutex_head++;
         pthread_cond_broadcast(&tq->tq_cond);
@@ -52,7 +66,7 @@ void tq_fair_mutex_unlock() {
     }
 
 }
-void tq_set_timer() {
+static void tq_set_timer() {
     if (tq && tq->size && !tq_shutdown) {
         Task t = tq->tasks[0];
         uint64_t current_time_us = get_current_time_in_us();
@@ -69,7 +83,7 @@ void tq_set_timer() {
     }
 }
 
-void tq_resize() {
+static void tq_resize() {
     if (tq) {
         unsigned int nc = TQ_RESIZE_FACTOR * tq->capacity;
         Task *nq = (Task*)realloc(tq->tasks, nc * sizeof(Task));
@@ -82,7 +96,7 @@ void tq_resize() {
     }
 }
 
-void tq_bubble_up() {
+static void tq_bubble_up() {
     if (tq) {
         unsigned int index = tq->size;
         while(index > 0) {
@@ -99,7 +113,7 @@ void tq_bubble_up() {
     }
 }
 
-void tq_bubble_down() {
+static void tq_bubble_down() {
     if (tq) {
         unsigned int n = tq->size;
         unsigned int index = 0;
@@ -128,29 +142,31 @@ void tq_bubble_down() {
     }
 }
 
-void tq_push(Task T) {
+static void tq_push(Task T) {
     if (tq) {
         if (tq->size == tq->capacity) {
             tq_resize();
         }
-        // Add to the bottom of the priority queue;
+        // Add to the bottom of the priority queue
         tq->tasks[tq->size] = T;
         tq_bubble_up();
+        // Increment the size after bubbling up
         tq->size++;
     }
 }
 
-Task tq_pop() {
+static Task tq_pop() {
     Task t = {NULL, 0};
     if (tq && tq->size) {
         t = tq->tasks[0];
         tasks[0] = tq->tasks[--tq->size];
+        // Decrement the size before bubbling down
         tq_bubble_down();
     }
     return t;
 }
 
-Task tq_front() {
+static Task tq_front() {
     Task t = {NULL, 0};
     if (tq && tq->size) {
         t = tq->tasks[0];
@@ -158,7 +174,7 @@ Task tq_front() {
     return t;
 }
 
-void timer_thread(void * arg) {
+static void timer_thread(void * arg) {
     if (tq && !tq_shutdown) {
         uint64_t current_time_us = get_current_time_in_us();
         tq_fair_mutex_lock();

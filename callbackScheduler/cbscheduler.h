@@ -6,6 +6,6 @@
 
 void cbscheduler_init();
 void schedule(void (*callback)(), uint64_t delay_us);
+void cbscheduler_shutdown();
 
-#endif
 #endif
