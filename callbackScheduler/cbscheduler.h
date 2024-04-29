@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 #define TQ_INIT_CAPACITY 10
+#define THT_INIT_CAPACITY 10
 #define TQ_RESIZE_FACTOR 2
-
-// Function prototypes
+#define THT_RESIZE_FACTOR 2
 
 // Initializes the callback scheduler
 void cbscheduler_init();

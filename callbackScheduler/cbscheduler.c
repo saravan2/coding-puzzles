@@ -21,6 +21,7 @@ typedef struct {
     unsigned int capacity;
     timer_t tq_timerid;
     uint64_t tq_timer_at;
+    uint64_t tq_max_execute_at;
     pthread_mutex_t tq_mutex;
     pthread_cond_t tq_cond;
     unsigned long long tq_mutex_head;
@@ -28,7 +29,7 @@ typedef struct {
 } TaskPQ;
 
 // Globals
-TaskPQ tq* = NULL;
+TaskPQ *tq = NULL;
 volatile unsigned int tq_shutdown = 1;
 
 // Declarations
@@ -71,6 +72,7 @@ static void tq_fair_mutex_unlock() {
     }
 
 }
+
 static int tq_set_timer() {
     int status = TQ_ERR;
     if (tq && tq->size && !tq_shutdown) {
@@ -140,7 +142,7 @@ static void tq_bubble_down(unsigned int index) {
             }
 
             if (right < n && tq->tasks[right].execute_at < tq->tasks[smallest].execute_at) {
-                smallest = right;Can we implement a hashing function
+                smallest = right;
             }
 
             if (smallest != index) {
@@ -238,12 +240,12 @@ static void timer_thread(void * arg) {
 void cbscheduler_init() {
     struct sigevent sev;
 
-    tq = (TaskPQ* )malloc(sizeof(TaskPQ));
+    tq = (TaskPQ *)malloc(sizeof(TaskPQ));
     if (!tq) {
         perror("cbscheduler_init() - Failed to allocate memory for TaskPQ");
         exit(TQ_ERR);
     }
-    tq->tasks = (Task*)malloc(TQ_INIT_CAPACITY * sizeof(Task));
+    tq->tasks = (Task *)malloc(TQ_INIT_CAPACITY * sizeof(Task));
     if (!(tq->tasks)) {
         perror("cbscheduler_init() - Failed to allocate memory for TaskPQ tasks");
         exit(TQ_ERR);
@@ -306,10 +308,11 @@ void cbscheduler_shutdown() {
 int schedule(void (*callback)(), uint64_t delay_us)  {
     int status = TQ_ERR;
     if (callback && delay_us) {
-        Task T = {callback, get_current_time_in_us() + delay_us};
+        uint64_t execute_at = (get_current_time_in_us() + delay_us);
+        Task T = {callback, execute_at};
         if (tq && !tq_shutdown) {
             tq_fair_mutex_lock();
-
+            tq->tq_max_execute_at = (tq->tq_max_execute_at < execute_at) ? execute_at : tq->tq_max_execute_at;
             if (tq_push(T)) {
                 perror("schedule() - Failed to push task");
             } else {
