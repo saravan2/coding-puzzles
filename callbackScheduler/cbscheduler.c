@@ -28,14 +28,28 @@ typedef struct {
     unsigned long long tq_mutex_tail;
 } TaskPQ;
 
+typedef struct {
+    void (*callback)();
+    uint64_t execute_at;
+    unsigned int task_index;
+    unsigned int in_use;
+    unsigned int used_before;
+} TaskHashTableEntry;
+
+typedef struct {
+    TaskHashTableEntry *table;
+    unsigned int size;
+    unsigned int capacity;
+} TaskHT;
+
 // Globals
 TaskPQ *tq = NULL;
+TaskHT *tht = NULL;
 volatile unsigned int tq_shutdown = 1;
 
 // Declarations
 static uint64_t get_current_time_in_us();
 static void tq_fair_mutex_lock();
-static void tq_fair_mutex_unlock();
 static void tq_fair_mutex_unlock();
 static int tq_set_timer();
 static int tq_resize();
@@ -71,6 +85,10 @@ static void tq_fair_mutex_unlock() {
         pthread_mutex_unlock(&tq->tq_mutex);
     }
 
+}
+
+unsigned int tht_key(void (*callback)(), uint64_t execute_at, unsigned int capacity) {
+    return ((unsigned int)callback ^ (unsigned int)execute_at) % capacity;
 }
 
 static int tq_set_timer() {
