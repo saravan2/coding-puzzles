@@ -67,7 +67,7 @@ private:
 
 public:
     void schedule(void (*callback)(), int delay_us) {
-        fair_scheduler_mutex_lock();
+        scheduler_fair_lock();
         Task new_task(callback, delay_us + current_time_us());
         TaskQueue.push(new_task);
         set_next_timer();
