@@ -47,6 +47,7 @@ class Threadpool {
 			{
 				std::lock_guard<std::mutex> lock(mtx);
 			}
+			tasks.clear();
 			cv.notify_all();
 			for (auto& t : threads) {
 				t.join();
