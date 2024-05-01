@@ -46,8 +46,8 @@ class Threadpool {
 			stopFlag = true;
 			{
 				std::lock_guard<std::mutex> lock(mtx);
+				tasks.clear();
 			}
-			tasks.clear();
 			cv.notify_all();
 			for (auto& t : threads) {
 				t.join();
