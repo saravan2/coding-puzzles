@@ -43,7 +43,7 @@ private:
     void scheduler_fair_lock() {
         std::unique_lock<std::mutex> lck(this->mtx);
         unsigned long long turn = this->mtx_tail++;
-        cv.wait(lck, (turn != this->mtx_head));
+        cv.wait(lck, [this, turn]{ return (this->mtx_head == turn); });
     }
 
     /* Wake up the next thread in line */
@@ -68,20 +68,30 @@ private:
 public:
     void schedule(void (*callback)(), int delay_us) {
         scheduler_fair_lock();
-        Task new_task(callback, delay_us + current_time_us());
-        TaskQueue.push(new_task);
-        set_next_timer();
+        try {
+            Task new_task(callback, delay_us + current_time_us());
+            TaskQueue.push(new_task);
+            set_next_timer();
+        } catch (...) {
+            scheduler_fair_unlock();
+            throw;
+        }
         scheduler_fair_unlock();
     }
 
     void execute_tasks() {
         scheduler_fair_lock();
-        while (!TaskQueue.empty() && TaskQueue.top().execute_at <= current_time_us()) {
-            Task task = TaskQueue.top();
-            TaskQueue.pop();
-            task.callback();
+        try {
+            while (!TaskQueue.empty() && TaskQueue.top().execute_at <= current_time_us()) {
+                Task task = TaskQueue.top();
+                TaskQueue.pop();
+                task.callback();
+            }
+            set_next_timer();
+        } catch (...) {
+            scheduler_fair_unlock();
+            throw;
         }
-        set_next_timer();
         scheduler_fair_unlock();
     }
 };
