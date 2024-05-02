@@ -22,6 +22,7 @@ typedef struct {
     timer_t tq_timerid;
     uint64_t tq_timer_at;
     uint64_t tq_max_execute_at;
+    uint64_t tq_min_execute_at;
     pthread_mutex_t tq_mutex;
     pthread_cond_t tq_cond;
     unsigned long long tq_mutex_head;
@@ -87,8 +88,128 @@ static void tq_fair_mutex_unlock() {
 
 }
 
-unsigned int tht_key(void (*callback)(), uint64_t execute_at, unsigned int capacity) {
+static unsigned int tht_hash(void (*callback)(), uint64_t execute_at, unsigned int capacity) {
     return ((unsigned int)callback ^ (unsigned int)execute_at) % capacity;
+}
+
+static int tht_insert(void (*callback)(), uint64_t execute_at, unsigned int task_index) {
+    int status = TQ_ERR;
+    if (tht && tq && !tq_shutdown) {
+        if (tht->size == tht->capacity) {
+            if (tht_resize_rehash()) {
+                return status;
+            }
+        }
+        unsigned int start_slot = tht_hash(callback, execute_at, tht->capacity);
+        unsigned int slot = start_slot;
+        unsigned int reslot = ~0;
+
+        do {
+            if (!tht->table[slot].in_use) {
+                if (!tht->table[slot].used_before) {
+                    break;
+                }
+                if (reslot == ~0) {
+                    reslot = slot;
+                }
+            } else if (tht->table[slot].callback == callback && tht->table[slot].execute_at == execute_at) {
+                tht->table[slot].task_index = task_index;
+                status = TQ_OK;
+                return status;
+            }
+            slot = (slot + 1) % tht->capacity;
+        } while (slot != start_slot);
+
+        if ((reslot != ~0) && tht->table[slot].in_use) {
+            slot = reslot;
+        } else if ((reslot == ~0) && tht->table[slot].in_use) {
+            return status;
+        }
+
+        tht->table[slot].callback = callback;
+        tht->table[slot].task_index = task_index;
+        tht->table[slot].in_use = 1;
+        tht->table[slot].used_before = 1;
+        tht->size++;
+        status = TQ_OK;
+    }
+    return status;
+}
+
+static int tht_delete(void (*callback)(), uint64_t execute_at) {
+    int status = TQ_ERR;
+    if (tht && tq && !tq_shutdown) {
+        unsigned int start_slot = tht_hash(callback, execute_at, tht->capacity);
+        unsigned int slot = start_slot;
+
+        do {
+            if (tht->table[slot].in_use) {
+                if ((tht->table[slot].callback == callback) && (tht->table[slot].execute_at == execute_at)) {
+                    tht->table[slot].in_use = 0;
+                    tht->table[slot].used_before = 1;
+                    tht->size--;
+                    status = TQ_OK;
+                    return status;
+                }
+            }
+            slot = (slot + 1) % tht->capacity;
+        } while (slot != start_slot);
+    }
+    return status;
+}
+
+static int tht_find(void (*callback)(), uint64_t execute_at, unsigned int *task_index) {
+    int status = TQ_ERR;
+    if (tht && tq && !tq_shutdown) {
+        unsigned int start_slot = tht_hash(callback, execute_at, tht->capacity);
+        unsigned int slot = start_slot;
+
+        do {
+            if (!tht->table[slot].in_use) {
+                if (!tht->table[slot].used_before) {
+                    return status;
+                }
+            } else if ((tht->table[slot].callback == callback) && (tht->table[slot].execute_at == execute_at)) {
+                *task_index = tht->table[slot].task_index;
+                status = TQ_OK;
+                return status;
+            }
+            slot = (slot + 1) % tht->capacity;
+        } while (slot != start_slot);
+
+    }
+    return status;
+}
+
+static int tht_resize() {
+    int status = TQ_ERR;
+    if (tht && tht->table) {
+        unsigned int nc = THT_INIT_CAPACITY * tht->capacity;
+        TaskHashTableEntry *nt = (TaskHashTableEntry *)calloc(nc, sizeof(TaskHashTableEntry));
+        if (!nt) {
+            perror("tht_resize() - Failed to allocate memory, tht_shutdown() initiated");
+            tht_shutdown();
+            return status;
+        }
+
+        for (unsigned int slot = 0; i < tht->capacity; i++) {
+            if (tht->table[slot].in_use) {
+                unsigned int new_slot = tht_hash(tht->table[slot].callback, tht->table[slot].execute_at, nc);
+
+                while (nt[new_slot].in_use) {
+                    new_slot = (new_slot + 1) % nc;
+                }
+
+                nt[new_slot] = tht->table[slot];
+            }
+        }
+
+        free(tht->table);
+        tht->table = nt;
+        tht->capacity = nc;
+        status = TQ_OK;
+    }
+    return status;
 }
 
 static int tq_set_timer() {
@@ -138,7 +259,9 @@ static void tq_bubble_up(unsigned int index) {
             if (tq->tasks[index].execute_at < tq->tasks[parent].execute_at) {
                 Task temp = tq->tasks[index];
                 tq->tasks[index] = tq->tasks[parent];
+                tht_insert(tq->tasks[index].callback, tq->tasks[index].execute_at, index);
                 tq->tasks[parent] = temp;
+                tht_insert(tq->tasks[parent].callback, tq->tasks[parent].execute_at, parent);
                 index = parent;
             } else {
                 break;
@@ -166,7 +289,9 @@ static void tq_bubble_down(unsigned int index) {
             if (smallest != index) {
                 Task temp = tq->tasks[index];
                 tq->tasks[index] = tq->tasks[smallest];
+                tht_insert(tq->tasks[index].callback, tq->tasks[index].execute_at, index);
                 tq->tasks[smallest] = temp;
+                tht_insert(tq->tasks[smallest].callback, tq->tasks[smallest].execute_at, smallest);
                 index = smallest;
             } else {
                 break;
@@ -179,7 +304,9 @@ static void tq_remove(unsigned int index) {
     if (tq && tq->size \
         && index >= 0 \
         && index < tq->size) {
+        tht_delete(tq->tasks[index].callback, tq->tasks[index].execute_at);
         tq->tasks[index] = tq->tasks[--tq->size];
+        tht_insert(tq->tasks[index].callback, tq->tasks[index].execute_at, index);
         if (index) {
             // Compare with parent to know whether bubble up or down
             int parent = (index - 1) / 2;
@@ -205,6 +332,7 @@ static int tq_push(Task T) {
         }
         // Add to the bottom of the priority queue
         tq->tasks[tq->size] = T;
+        tht_insert(T.callback, T.execute_at, tq->size); 
         tq_bubble_up(tq->size);
         // Increment the size after bubbling up
         tq->size++;
@@ -217,7 +345,9 @@ static Task tq_pop() {
     Task t = {NULL, 0};
     if (tq && tq->size) {
         t = tq->tasks[0];
-        tasks[0] = tq->tasks[--tq->size];
+        tht_delete(tq->tasks[tq->size].callback, tq->tasks[tq->size].execute_at);
+        tq->tasks[0] = tq->tasks[--tq->size];
+        tht_insert(tq->tasks[0].callback, tq->tasks[0].execute_at, 0);
         // Decrement the size before bubbling down
         tq_bubble_down(0);
     }
@@ -255,9 +385,7 @@ static void timer_thread(void * arg) {
     }
 }
 
-void cbscheduler_init() {
-    struct sigevent sev;
-
+static void tq_init() {
     tq = (TaskPQ *)malloc(sizeof(TaskPQ));
     if (!tq) {
         perror("cbscheduler_init() - Failed to allocate memory for TaskPQ");
@@ -272,6 +400,9 @@ void cbscheduler_init() {
     tq->capacity = TQ_INIT_CAPACITY;
     tq->tq_timerid = 0;
     tq->tq_timer_at = 0;
+    tq->tq_max_execute_at = 0;
+    tq->tq_min_execute_at = 0;
+
     if (pthread_mutex_init(&tq->tq_mutex, NULL)) {
         perror("cbscheduler_init() - Failed to initialize tq mutex");
         exit(TQ_ERR);
@@ -283,7 +414,8 @@ void cbscheduler_init() {
     }
     tq->tq_mutex_head = 0;
     tq->tq_mutex_tail = 0;
-        
+
+    struct sigevent sev;
     sev.sigev_notify = SIGEV_THREAD;
     sev.sigev_notify_attributes = NULL;
     sev.sigev_notify_function = timer_thread;
@@ -293,14 +425,26 @@ void cbscheduler_init() {
         perror("cbscheduler_init() - Failed to create timer");
         exit(TQ_ERR);
     }
-
     tq_shutdown = 0;
 }
 
-void cbscheduler_shutdown() {
+static void tht_init() {
+    tht = (TaskHT *)malloc(sizeof(TaskHT));
+    if (!tht) {
+        perror("cbscheduler_init() - Failed to allocate memory for TaskHT");
+        exit(TQ_ERR);
+    }
+    tht->table = (TaskHashTableEntry *)malloc(THT_INIT_CAPACITY * sizeof(TaskHashTableEntry));
+    if (!tht->table) {
+        perror("cbscheduler_init() - Failed to allocate memory for TaskHT table");
+        exit(TQ_ERR);
+    }
+    tht->size = 0;
+    tht->capacity = THT_INIT_CAPACITY;
+}
+
+static void tq_shutdown() {
     tq_shutdown = 1;
-    // Wait for timer thread and threads registering callback to exit critical section.
-    sleep(2);
     if (tq) {
         tq_fair_mutex_lock();
         tq_fair_mutex_unlock();
@@ -323,14 +467,38 @@ void cbscheduler_shutdown() {
     }
 }
 
-int schedule(void (*callback)(), uint64_t delay_us)  {
+static void tht_shutdown() {
+    if (tht) {
+        if (tht->table) {
+            free(tht->table);
+        }
+        free(tht);
+        tht = NULL;
+    }
+}
+
+void cbscheduler_init() {
+    tq_init();
+    tht_init();
+}
+
+void cbscheduler_shutdown() {
+    tq_shutdown = 1;
+    // Wait for timer thread and threads registering callback to exit critical section.
+    sleep(2);
+    tq_shutdown();
+    tht_shutdown();
+}
+
+int schedule(void (*callback)(), uint64_t delay_us, uint64_t *execute_at)  {
     int status = TQ_ERR;
     if (callback && delay_us) {
-        uint64_t execute_at = (get_current_time_in_us() + delay_us);
-        Task T = {callback, execute_at};
+        *execute_at = (get_current_time_in_us() + delay_us);
+        Task T = {callback, *execute_at};
         if (tq && !tq_shutdown) {
             tq_fair_mutex_lock();
-            tq->tq_max_execute_at = (tq->tq_max_execute_at < execute_at) ? execute_at : tq->tq_max_execute_at;
+            tq->tq_max_execute_at = (tq->tq_max_execute_at < *execute_at) ? *execute_at : tq->tq_max_execute_at;
+            tq->tq_min_execute_at = (tq->tq_min_execute_at > *execute_at) ? *execute_at : tq->tq_min_execute_at;
             if (tq_push(T)) {
                 perror("schedule() - Failed to push task");
             } else {
@@ -340,7 +508,24 @@ int schedule(void (*callback)(), uint64_t delay_us)  {
                     status = TQ_OK;
                 }
             }
+            tq_fair_mutex_unlock();
+        }
+    }
+    return status;
+}
 
+int cancel_schedule(void (*callback)(), uint64_t execute_at) {
+    int status = TQ_ERR;
+    if (callback && execute_at) {
+        Task T = {callback, execute_at};
+        if (tq && tht && !tq_shutdown) {
+            tq_fair_mutex_lock();
+            if ((execute_at >= tq->tq_min_execute_at) && (execute_at <= tq->tq_max_execute_at)) {
+                unsigned int task_index;
+                if (tht_find(callback, execute_at, &task_index) == TQ_OK) {
+                    tq_remove(task_index);
+                }
+            }
             tq_fair_mutex_unlock();
         }
     }
