@@ -22,7 +22,6 @@ typedef struct {
     timer_t tq_timerid;
     uint64_t tq_timer_at;
     uint64_t tq_max_execute_at;
-    uint64_t tq_min_execute_at;
     pthread_mutex_t tq_mutex;
     pthread_cond_t tq_cond;
     unsigned long long tq_mutex_head;
@@ -401,7 +400,6 @@ static void tq_init() {
     tq->tq_timerid = 0;
     tq->tq_timer_at = 0;
     tq->tq_max_execute_at = 0;
-    tq->tq_min_execute_at = 0;
 
     if (pthread_mutex_init(&tq->tq_mutex, NULL)) {
         perror("cbscheduler_init() - Failed to initialize tq mutex");
@@ -498,7 +496,6 @@ int schedule(void (*callback)(), uint64_t delay_us, uint64_t *execute_at)  {
         if (tq && !tq_shutdown) {
             tq_fair_mutex_lock();
             tq->tq_max_execute_at = (tq->tq_max_execute_at < *execute_at) ? *execute_at : tq->tq_max_execute_at;
-            tq->tq_min_execute_at = (tq->tq_min_execute_at > *execute_at) ? *execute_at : tq->tq_min_execute_at;
             if (tq_push(T)) {
                 perror("schedule() - Failed to push task");
             } else {
@@ -520,7 +517,7 @@ int cancel_schedule(void (*callback)(), uint64_t execute_at) {
         Task T = {callback, execute_at};
         if (tq && tht && !tq_shutdown) {
             tq_fair_mutex_lock();
-            if ((execute_at >= tq->tq_min_execute_at) && (execute_at <= tq->tq_max_execute_at)) {
+            if ((execute_at >= tq->tq_timer_at) && (execute_at <= tq->tq_max_execute_at)) {
                 unsigned int task_index;
                 if (tht_find(callback, execute_at, &task_index) == TQ_OK) {
                     tq_remove(task_index);
