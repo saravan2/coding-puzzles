@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <pthread.h>
@@ -88,13 +89,25 @@ static void tq_fair_mutex_unlock() {
 }
 
 static unsigned int tht_hash(void (*callback)(), uint64_t execute_at, unsigned int capacity) {
-    return ((unsigned int)callback ^ (unsigned int)execute_at) % capacity;
+    unsigned int hash = 5381;
+    unsigned char *ptr = (unsigned char *)&callback;
+
+    for (size_t i = 0; i < sizeof(callback); i++) {
+        hash = ((hash << 5) + hash) + ptr[i];
+    }
+
+    ptr = (unsigned char *)&execute_at;
+    for (size_t i = 0; i < sizeof(execute_at); i++) {
+        hash = ((hash << 5) + hash) + ptr[i];
+    }
+
+    return (hash % capacity);
 }
 
 static int tht_insert(void (*callback)(), uint64_t execute_at, unsigned int task_index) {
     int status = TQ_ERR;
     if (tht && tq && !tq_shutdown) {
-        if (tht->size == tht->capacity) {
+        if (tht->size >= (unsigned int)(0.7 * tht->capacity)) {
             if (tht_resize_rehash()) {
                 return status;
             }
